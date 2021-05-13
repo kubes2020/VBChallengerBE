@@ -3,7 +3,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const cors = require("cors");
 
-const adminRouter = require("./routes/admin-routes.js");
+const adminRouter = require("../routes/admin-router.js");
 
 const server = express();
 server.use(helmet());
