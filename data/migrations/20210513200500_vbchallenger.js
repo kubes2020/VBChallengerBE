@@ -29,6 +29,17 @@ exports.up = function (knex) {
                 .onDelete("CASCADE")
                 .onUpdate("CASCADE");
         })
+        .createTable("teams", (tbl) => {
+            tbl.increments();
+            tbl.string("team_name", 255).notNullable();
+            tbl.integer("courts_id")
+                .unsigned()
+                .notNullable()
+                .references("id")
+                .inTable("courts")
+                .onDelete("CASCADE")
+                .onUpdate("CASCADE");
+        })
         .createTable("users", (tbl) => {
             tbl.increments();
             tbl.string("username", 255).notNullable().unique();
@@ -39,13 +50,6 @@ exports.up = function (knex) {
                 .inTable("passcode")
                 .onDelete("CASCADE")
                 .onUpdate("CASCADE");
-            tbl.integer("courts_id")
-                .unsigned()
-                .notNullable()
-                .references("id")
-                .inTable("courts")
-                .onDelete("CASCADE")
-                .onUpdate("CASCADE");
         });
 };
 
@@ -54,5 +58,6 @@ exports.down = function (knex) {
         .dropTableIfExists("admin")
         .dropTableIfExists("passcode")
         .dropTableIfExists("courts")
+        .dropTableIfExists("teams")
         .dropTableIfExists("users");
 };
