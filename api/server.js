@@ -4,6 +4,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 
 const adminRouter = require("../routes/admin-router.js");
+const usersRouter = require("../routes/users-router.js");
 
 const server = express();
 server.use(helmet());
@@ -12,5 +13,6 @@ server.use(cors());
 server.use(express.json());
 
 server.use("/api/admin", adminRouter);
+server.use("/api/users", usersRouter);
 
 module.exports = server;

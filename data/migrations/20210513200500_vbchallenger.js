@@ -44,7 +44,7 @@ exports.up = function (knex) {
         })
         .createTable("users", (tbl) => {
             tbl.increments();
-            tbl.string("username", 255).notNullable().unique();
+            tbl.string("username", 255).notNullable();
             tbl.boolean("active").notNullable().defaultTo(0);
             tbl.integer("wins").defaultTo(0);
             tbl.integer("total_games").defaultTo(0);
