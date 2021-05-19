@@ -32,6 +32,8 @@ exports.up = function (knex) {
         .createTable("teams", (tbl) => {
             tbl.increments();
             tbl.string("team_name", 255).notNullable();
+            tbl.integer("team_wins").defaultTo(0);
+            tbl.integer("admin_adjust").defaultTo(10);
             tbl.integer("courts_id")
                 .unsigned()
                 .notNullable()
@@ -43,6 +45,9 @@ exports.up = function (knex) {
         .createTable("users", (tbl) => {
             tbl.increments();
             tbl.string("username", 255).notNullable().unique();
+            tbl.boolean("active").notNullable().defaultTo(0);
+            tbl.integer("wins").defaultTo(0);
+            tbl.integer("total_games").defaultTo(0);
             tbl.integer("passcode_id")
                 .unsigned()
                 .notNullable()
