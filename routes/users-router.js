@@ -17,7 +17,7 @@ router.get("/waitlist/:pc", (req, res) => {
             }
         })
         .catch((err) => {
-            res.status(500).json({ message: "something went wrong" });
+            res.status(500).json({ message: "Something went wrong" });
         });
 });
 
@@ -36,7 +36,42 @@ router.get("/waitlist/:pc/:ct", (req, res) => {
             }
         })
         .catch((err) => {
-            res.staus(500).json({ message: "something went wrong" });
+            res.staus(500).json({ message: "Something went wrong" });
+        });
+});
+
+router.get("/user/:pc/:username", (req, res) => {
+    const pc = req.params.pc;
+    const username = req.params.username;
+    Users.findUser(pc, username)
+        .then((user) => {
+            if (user.length > 0) {
+                res.status(200).json({ data: user });
+            } else {
+                res.status(404).json({ message: "Cannot find user info" });
+            }
+        })
+        .catch((err) => {
+            res.status(500).json({ message: "Something went wrong" });
+        });
+});
+
+router.post("/user/add/:pc", (req, res) => {
+    const pc = req.params.pc;
+    const theUser = req.body;
+    console.log(
+        "this is req.body.username",
+        theUser.username,
+        theUser.teamToJoin,
+        theUser.courts_id,
+        pc
+    );
+    Users.addUser(pc, theUser.username, theUser.teamToJoin, theUser.courts_id)
+        .then((user) => {
+            res.status(200).json({ data: user });
+        })
+        .catch((err) => {
+            res.status(500).json({ message: err });
         });
 });
 
