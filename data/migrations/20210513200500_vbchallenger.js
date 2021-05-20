@@ -46,7 +46,9 @@ exports.up = function (knex) {
             tbl.increments();
             tbl.string("username", 255).notNullable();
             tbl.boolean("active").notNullable().defaultTo(0);
-            tbl.integer("wins").defaultTo(0);
+            tbl.integer("wins_today").defaultTo(0);
+            tbl.integer("games_today").defaultTo(0);
+            tbl.integer("total_wins").defaultTo(0);
             tbl.integer("total_games").defaultTo(0);
             tbl.integer("passcode_id")
                 .unsigned()

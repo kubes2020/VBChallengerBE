@@ -2,8 +2,9 @@ const router = require("express").Router();
 const Users = require("../models/users-model.js");
 
 // CRUD operations
+// * All database entries should be UPPERCASE *
 
-// Get all teams on waitlist with parameter pc = passcode
+// Returns array of objects, all teams on waitlist with parameter pc = passcode
 router.get("/waitlist/:pc", (req, res) => {
     const { pc } = req.params;
     Users.findAllTeamsPerCode(pc)
@@ -21,6 +22,7 @@ router.get("/waitlist/:pc", (req, res) => {
         });
 });
 
+// Returns array of objects, all teams on waitlist for this passcode at one court_name
 router.get("/waitlist/:pc/:ct", (req, res) => {
     const pc = req.params.pc;
     const ct = req.params.ct;
@@ -40,6 +42,7 @@ router.get("/waitlist/:pc/:ct", (req, res) => {
         });
 });
 
+// Returns user info at this passcode with this username
 router.get("/user/:pc/:username", (req, res) => {
     const pc = req.params.pc;
     const username = req.params.username;
@@ -56,6 +59,10 @@ router.get("/user/:pc/:username", (req, res) => {
         });
 });
 
+// Add user to a waitlist
+//  url param = passcode
+//  req.body needs: username, teamToJoin, courts_id
+// Returns success message
 router.post("/user/add/:pc", (req, res) => {
     const pc = req.params.pc;
     const theUser = req.body;
@@ -72,6 +79,18 @@ router.post("/user/add/:pc", (req, res) => {
         })
         .catch((err) => {
             res.status(500).json({ message: err });
+        });
+});
+
+router.put("/team/loss/:pc", (req, res) => {
+    const pc = req.params.pc;
+    const theTeam = req.body;
+    Users.updateTeamLoss(theTeam.team_name, pc)
+        .then((team) => {
+            res.status(200).json({ message: team });
+        })
+        .catch((err) => {
+            res.status(500).json({ message: err.message });
         });
 });
 

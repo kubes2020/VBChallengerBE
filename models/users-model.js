@@ -5,6 +5,7 @@ module.exports = {
     findAllTeamsPerCourt,
     findUser,
     addUser,
+    updateTeamLoss,
 };
 
 // Find all teams on waitlist for all courts (in order) with same passcode.code (accounting for admin_adjust gets priority on court)
@@ -96,7 +97,7 @@ function updateUserActive(theUsername) {
     return db("users").where({ username: theUsername }).update({ active: 1 });
 }
 
-// Add user to waitlist -> find the passcode then insert into users & teams table.  If user exists already -> findPasscodeId -> addUser
+// Add user to waitlist -> find the passcode.id then insert into users & teams table.  If user exists already -> findPasscodeId -> addUser
 // INSERT INTO users (username, active, passcode_id)
 // VALUES ("NEWUSER", 1, 1)
 async function addUser(theCode, theUsername, theTeamToJoin, theCourts_id) {
@@ -126,3 +127,27 @@ async function addUser(theCode, theUsername, theTeamToJoin, theCourts_id) {
         }
     }
 }
+
+// After a team loses
+// (Pass in team_name and passcode.code, findPasscodeId, delete it from teams table, update users table)
+async function updateTeamLoss(theTeam_name, theCode) {
+    const pcId = await findPasscodeId(theCode);
+    const splitNames = theTeam_name.split(",")[0];
+    console.log("splitnames and pcId", splitNames, pcId[0].id);
+
+    return db("users")
+        .where({ username: splitNames, passcode_id: pcId[0].id })
+        .update({
+            active: 0,
+            games_today: games_today + 1,
+            total_games: total_games + 1,
+        });
+}
+
+// UPDATE users
+// SET active = 0, games_today = games_today +1, total_games = total_games +1
+// WHERE username = "USER1" or username = "USER2";
+
+// DELETE
+// FROM teams
+// WHERE team_name = "USER1,USER2";
