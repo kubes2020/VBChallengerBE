@@ -75,17 +75,29 @@ router.post("/user/add/:pc", (req, res) => {
     );
     Users.addUser(pc, theUser.username, theUser.teamToJoin, theUser.courts_id)
         .then((user) => {
-            res.status(200).json({ data: user });
+            res.status(200).json({ message: user });
         })
         .catch((err) => {
             res.status(500).json({ message: err });
         });
 });
 
-router.put("/team/loss/:pc", (req, res) => {
+router.put("/team/loses/:pc", (req, res) => {
     const pc = req.params.pc;
     const theTeam = req.body;
-    Users.updateTeamLoss(theTeam.team_name, pc)
+    Users.updateTeamLoses(theTeam.team_name, pc)
+        .then((team) => {
+            res.status(200).json({ message: team });
+        })
+        .catch((err) => {
+            res.status(500).json({ message: err.message });
+        });
+});
+
+router.put("/team/wins/:pc", (req, res) => {
+    const pc = req.params.pc;
+    const theTeam = req.body;
+    Users.updateTeamWins(theTeam.team_name, pc)
         .then((team) => {
             res.status(200).json({ message: team });
         })

@@ -41,6 +41,13 @@ exports.up = function (knex) {
                 .inTable("courts")
                 .onDelete("CASCADE")
                 .onUpdate("CASCADE");
+            tbl.integer("passcode_id")
+                .unsigned()
+                .notNullable()
+                .references("id")
+                .inTable("passcode")
+                .onDelete("CASCADE")
+                .onUpdate("CASCADE");
         })
         .createTable("users", (tbl) => {
             tbl.increments();

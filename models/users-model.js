@@ -5,7 +5,8 @@ module.exports = {
     findAllTeamsPerCourt,
     findUser,
     addUser,
-    updateTeamLoss,
+    updateTeamLoses,
+    updateTeamWins,
 };
 
 // Find all teams on waitlist for all courts (in order) with same passcode.code (accounting for admin_adjust gets priority on court)
@@ -48,7 +49,13 @@ function findAllTeamsPerCourt(theCode, theCourt) {
 function findUser(theCode, theUsername) {
     return db("users")
         .join("passcode", "passcode.id", "users.passcode_id")
-        .select("active", "wins", "total_games")
+        .select(
+            "active",
+            "wins_today",
+            "games_today",
+            "total_wins",
+            "total_games"
+        )
         .where({ "passcode.code": theCode, "users.username": theUsername });
 }
 
@@ -74,10 +81,11 @@ function insertUserToUsers(theUsername, thePasscode_id) {
 // (Helper Function) Add new team_name to teams table
 // INSERT INTO teams (team_name, courts_id)
 // VALUES (“USER1”, 1)
-function insertNewTeamToTeams(theTeam_name, theCourts_id) {
+function insertNewTeamToTeams(theTeam_name, theCourts_id, thePasscode_id) {
     return db("teams").insert({
         team_name: theTeam_name,
         courts_id: theCourts_id,
+        passcode_id: thePasscode_id,
     });
 }
 
@@ -102,11 +110,12 @@ function updateUserActive(theUsername) {
 // VALUES ("NEWUSER", 1, 1)
 async function addUser(theCode, theUsername, theTeamToJoin, theCourts_id) {
     const found = await findUser(theCode, theUsername);
+    const pcId = await findPasscodeId(theCode);
+    console.log("***made it HERE");
     if (found.length === 0) {
-        const pcId = await findPasscodeId(theCode);
         await insertUserToUsers(theUsername, pcId[0].id);
         if (theTeamToJoin === "") {
-            await insertNewTeamToTeams(theUsername, theCourts_id);
+            await insertNewTeamToTeams(theUsername, theCourts_id, pcId[0].id);
             return "A new user was added to users and active = 1, a new team was added to teams";
         } else {
             await updateTeamName(theUsername, theTeamToJoin);
@@ -118,7 +127,11 @@ async function addUser(theCode, theUsername, theTeamToJoin, theCourts_id) {
         } else {
             await updateUserActive(theUsername);
             if (theTeamToJoin === "") {
-                await insertNewTeamToTeams(theUsername, theCourts_id);
+                await insertNewTeamToTeams(
+                    theUsername,
+                    theCourts_id,
+                    pcId[0].id
+                );
                 return "A new user was added to users and active = 1, a new team was added to teams from existing user";
             } else {
                 await updateTeamName(theUsername, theTeamToJoin);
@@ -129,25 +142,43 @@ async function addUser(theCode, theUsername, theTeamToJoin, theCourts_id) {
 }
 
 // After a team loses
-// (Pass in team_name and passcode.code, findPasscodeId, delete it from teams table, update users table)
-async function updateTeamLoss(theTeam_name, theCode) {
+// (Pass in team_name and passcode.code, findPasscodeId, map through each teammate to update users table, delete team_name from teams table)
+async function updateTeamLoses(theTeam_name, theCode) {
     const pcId = await findPasscodeId(theCode);
-    const splitNames = theTeam_name.split(",")[0];
-    console.log("splitnames and pcId", splitNames, pcId[0].id);
-
-    return db("users")
-        .where({ username: splitNames, passcode_id: pcId[0].id })
-        .update({
-            active: 0,
-            games_today: games_today + 1,
-            total_games: total_games + 1,
-        });
+    const splitNames = theTeam_name.split(",");
+    Promise.all(
+        splitNames.map((i) => {
+            return db("users")
+                .where({ username: i, passcode_id: pcId[0].id })
+                .update({ active: 0 })
+                .increment("games_today", 1)
+                .increment("total_games", 1);
+        })
+    );
+    await db("teams")
+        .where({ team_name: theTeam_name, passcode_id: pcId[0].id })
+        .delete();
+    return "Users and teams are updated";
 }
 
-// UPDATE users
-// SET active = 0, games_today = games_today +1, total_games = total_games +1
-// WHERE username = "USER1" or username = "USER2";
+// After a team wins
+// (Pass in team_name and passcode.code, findPasscodeId, map through each teammate to update users table)
+async function updateTeamWins(theTeam_name, theCode) {
+    const pcId = await findPasscodeId(theCode);
+    const splitNames = theTeam_name.split(",");
+    Promise.all(
+        splitNames.map((i) => {
+            return db("users")
+                .where({ username: i, passcode_id: pcId[0].id })
+                .increment("wins_today", 1)
+                .increment("games_today", 1)
+                .increment("total_wins", 1)
+                .increment("total_games", 1);
+        })
+    );
+    await db("teams")
+        .where({ team_name: theTeam_name, passcode_id: 1 })
+        .increment("team_wins", 1);
 
-// DELETE
-// FROM teams
-// WHERE team_name = "USER1,USER2";
+    return "Users and teams tables are updated";
+}
