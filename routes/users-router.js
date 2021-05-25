@@ -4,7 +4,8 @@ const Users = require("../models/users-model.js");
 // CRUD operations
 // * All database entries should be UPPERCASE *
 
-// Returns array of objects, all teams on waitlist with parameter pc = passcode
+// Output: array of objects, all teams on waitlist with parameter pc (passcode)
+// This is NOT in correct play order
 router.get("/waitlist/:pc", (req, res) => {
     const { pc } = req.params;
     Users.findAllTeamsPerCode(pc)
@@ -22,7 +23,8 @@ router.get("/waitlist/:pc", (req, res) => {
         });
 });
 
-// Returns array of objects, all teams on waitlist for this passcode at one court_name
+// Output: array of objects, all teams on waitlist for this passcode at one court_name
+// This is in correct play order
 router.get("/waitlist/:pc/:ct", (req, res) => {
     const pc = req.params.pc;
     const ct = req.params.ct;
@@ -42,7 +44,7 @@ router.get("/waitlist/:pc/:ct", (req, res) => {
         });
 });
 
-// Returns user info at this passcode with this username
+// Output: user info at this passcode with this username (username is only unique when paired with passcode)
 router.get("/user/:pc/:username", (req, res) => {
     const pc = req.params.pc;
     const username = req.params.username;
@@ -60,28 +62,23 @@ router.get("/user/:pc/:username", (req, res) => {
 });
 
 // Add user to a waitlist
-//  url param = passcode
-//  req.body needs: username, teamToJoin, courts_id
+// Input: passcode is in Url, username/teamToJoin/courts_id are in body
 // Returns success message
 router.post("/user/add/:pc", (req, res) => {
     const pc = req.params.pc;
     const theUser = req.body;
-    console.log(
-        "this is req.body.username",
-        theUser.username,
-        theUser.teamToJoin,
-        theUser.courts_id,
-        pc
-    );
     Users.addUser(pc, theUser.username, theUser.teamToJoin, theUser.courts_id)
         .then((user) => {
             res.status(200).json({ message: user });
         })
         .catch((err) => {
-            res.status(500).json({ message: err });
+            res.status(500).json({ message: "Something went wrong" });
         });
 });
 
+// Team loses -> update teams and users tables
+// Input: passcode is in Url, team_name in body
+// Output: success message
 router.put("/team/loses/:pc", (req, res) => {
     const pc = req.params.pc;
     const theTeam = req.body;
@@ -90,10 +87,13 @@ router.put("/team/loses/:pc", (req, res) => {
             res.status(200).json({ message: team });
         })
         .catch((err) => {
-            res.status(500).json({ message: err.message });
+            res.status(500).json({ message: "Something went wrong" });
         });
 });
 
+// Team wins -> update teams and users tables
+// Input: passcode is in Url, team_name in body
+// Output: success message
 router.put("/team/wins/:pc", (req, res) => {
     const pc = req.params.pc;
     const theTeam = req.body;
@@ -102,7 +102,7 @@ router.put("/team/wins/:pc", (req, res) => {
             res.status(200).json({ message: team });
         })
         .catch((err) => {
-            res.status(500).json({ message: err.message });
+            res.status(500).json({ message: "Something went wrong" });
         });
 });
 

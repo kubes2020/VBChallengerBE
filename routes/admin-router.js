@@ -2,6 +2,7 @@ const router = require("express").Router();
 const Admin = require("../models/admin-model.js");
 
 // CRUD operations
+// * All database entries should be UPPERCASE *
 const currentTime = new Date().toDateString();
 
 router.get("/test", (req, res) => {
