@@ -9,20 +9,20 @@ module.exports = {
     updateTeamWins,
 };
 
-// Find all teams on waitlist for all courts (in order) with same passcode.code (accounting for admin_adjust gets priority on court)
+// Find all teams on waitlist for all courts with same passcode.code (not correct play order)
 // SELECT team_name, court_name, courts_id
 // FROM teams
 // JOIN passcode on passcode.id = courts.passcode_id
 // JOIN courts on courts.id = teams.courts_id
 // WHERE passcode.code = "XXXX"
-// ORDER BY courts.id, teams.admin_adjust, teams.id;
+// ORDER BY courts.id;
 function findAllTeamsPerCode(theCode) {
     return db("teams")
         .join("passcode", "passcode.id", "courts.passcode_id")
         .join("courts", "courts.id", "teams.courts_id")
         .select("team_name", "court_name", "courts_id")
         .where({ "passcode.code": theCode })
-        .orderBy("courts.id", "teams.admin_adjust", "teams.id");
+        .orderBy("courts.id");
 }
 
 // Find teams who are on waitlist for 1 court: playa1
@@ -177,7 +177,7 @@ async function updateTeamWins(theTeam_name, theCode) {
         })
     );
     await db("teams")
-        .where({ team_name: theTeam_name, passcode_id: 1 })
+        .where({ team_name: theTeam_name, passcode_id: pcId[0].id })
         .increment("team_wins", 1);
 
     return "Users and teams tables are updated";
