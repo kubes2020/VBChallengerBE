@@ -2,7 +2,7 @@ exports.up = function (knex) {
     return knex.schema
         .createTable("admin", (tbl) => {
             tbl.increments();
-            tbl.string("admin_name", 255).notNullable().unique();
+            tbl.string("admin_email", 255).notNullable().unique();
             tbl.string("password", 255).notNullable();
         })
         .createTable("passcode", (tbl) => {

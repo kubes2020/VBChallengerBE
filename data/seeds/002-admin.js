@@ -1,7 +1,7 @@
 exports.seed = function (knex) {
     // Inserts seed entries
     return knex("admin").insert([
-        { admin_name: "BRIAN", password: "1111" },
-        { admin_name: "BOBBY", password: "2222" },
+        { admin_email: "BRIAN@ME.COM", password: "1111" },
+        { admin_email: "BOBBY@ME.COM", password: "2222" },
     ]);
 };

@@ -17,7 +17,7 @@ function findPasscodeId(theCode) {
 function findAdmins() {
     return db("admin")
         .join("passcode", "admin_id", "admin.id")
-        .select("admin_name", "code")
+        .select("admin_email", "code")
         .orderBy("admin.id");
 }
 
