@@ -63,6 +63,29 @@ router.get("/user/:pc/:username", (req, res) => {
         });
 });
 
+// Add username to users table to show available (active = 0)
+// Input: passcode in Url, username in body
+// Output: message for successful or not
+router.post("/username/available/:pc", (req, res) => {
+    const pc = req.params.pc;
+    const userObj = req.body;
+    Users.addUsername(pc, userObj.username)
+        .then((user) => {
+            if (user.length > 0) {
+                res.status(201).json({
+                    message: "You are now available for a team",
+                });
+            } else {
+                res.status(400).json({
+                    message: "That username exists in this group already",
+                });
+            }
+        })
+        .catch((err) => {
+            res.status(500).json({ message: "Something went wrong" });
+        });
+});
+
 // Add user to a waitlist
 // Input: passcode is in Url, username/teamToJoin/courts_id are in body
 // Output: success or error message
@@ -74,13 +97,13 @@ router.post("/user/add/:pc", (req, res) => {
             if (user.length > 0) {
                 res.status(409).json({ message: user });
             } else {
-                res.status(200).json({
+                res.status(201).json({
                     message: "The team has been updated successfully!",
                 });
             }
         })
         .catch((err) => {
-            res.status(500).json({ message: err.message });
+            res.status(500).json({ message: "Something went wrong" });
         });
 });
 
@@ -115,10 +138,3 @@ router.put("/team/wins/:pc", (req, res) => {
 });
 
 module.exports = router;
-
-// if (user.length > 0) {
-//     res.status(409).json({ message: user });
-// }
-// res.status(200).json({
-//     message: "Successfully updated",
-// })

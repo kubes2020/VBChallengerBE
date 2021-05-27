@@ -58,10 +58,10 @@ async function adminNewPasscode(theAdminId, newCode) {
 
 // Admin wants to delete beach passcode and all corresponding data
 // "casecade" does not work -> must delete each table column individually
-async function adminDeletePasscode(theCode) {
+async function adminDeletePasscode(theCode, theAdminId) {
     const oldCodeObj = await db("passcode")
         .select("id", "code")
-        .where({ code: theCode });
+        .where({ code: theCode, admin_id: theAdminId });
     if (oldCodeObj.length > 0) {
         await db("courts").where({ passcode_id: oldCodeObj[0].id }).delete();
         await db("teams").where({ passcode_id: oldCodeObj[0].id }).delete();
@@ -84,7 +84,7 @@ async function adminCreateCourts(
 ) {
     const nameExists = await db("courts")
         .select("court_name")
-        .where({ court_name });
+        .where({ court_name, passcode_id });
     if (nameExists.length > 0) {
         return "That court name already exists, try again.";
     } else {

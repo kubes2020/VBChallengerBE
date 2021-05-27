@@ -67,7 +67,7 @@ router.post("/newpasscode", (req, res) => {
     Admin.adminNewPasscode(adminObj.admin_id, adminObj.code)
         .then((addCode) => {
             if (addCode.length === 0) {
-                res.status(200).json({
+                res.status(201).json({
                     message: "New beach passcode was created!",
                 });
             } else {
@@ -80,11 +80,12 @@ router.post("/newpasscode", (req, res) => {
 });
 
 // Admin wants to delete beach passcode and all data corresponding to it
-// Input: passcode in URL
+// Input: passcode in URL, admin_id in body
 // Output: The deleted passcode
 router.delete("/deletepasscode/:pc", (req, res) => {
     const pc = req.params.pc;
-    Admin.adminDeletePasscode(pc)
+    const adminObj = req.body;
+    Admin.adminDeletePasscode(pc, adminObj.admin_id)
         .then((oldPasscode) => {
             if (oldPasscode.length > 0) {
                 res.status(200).json({ message: oldPasscode });
@@ -101,7 +102,7 @@ router.delete("/deletepasscode/:pc", (req, res) => {
 
 // Admin can create courts after previously creating a passcode
 // Input: court_name / num_players / num_wins / passcode_id in body
-// Output: 1 if successful, 0 if not
+// Output: message for successful or not
 router.post("/createcourts", (req, res) => {
     const courtObj = req.body;
     Admin.adminCreateCourts(
@@ -111,9 +112,8 @@ router.post("/createcourts", (req, res) => {
         courtObj.passcode_id
     )
         .then((court) => {
-            console.log("court!!!", court, court[0]);
             if (court.length > 0) {
-                res.status(403).json({ message: court });
+                res.status(400).json({ message: court });
             } else {
                 res.status(201).json({ message: "Court created successfully" });
             }

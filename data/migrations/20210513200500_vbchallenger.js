@@ -18,7 +18,7 @@ exports.up = function (knex) {
         })
         .createTable("courts", (tbl) => {
             tbl.increments();
-            tbl.string("court_name", 255).notNullable().unique();
+            tbl.string("court_name", 255).notNullable();
             tbl.integer("num_players").notNullable();
             tbl.integer("num_wins");
             tbl.integer("passcode_id")
