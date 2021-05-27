@@ -1,3 +1,4 @@
+const restrictedMiddleware = require("../auth/restricted-middleware");
 const db = require("../data/config");
 
 module.exports = {
@@ -84,36 +85,56 @@ function updateUserActive(theUsername) {
 async function addUser(theCode, theUsername, theTeamToJoin, theCourts_id) {
     const found = await findUser(theCode, theUsername);
     const pcId = await findPasscodeId(theCode);
-    // if username is not in users table, add it
+    // if username is not yet in users table
     if (found.length === 0) {
-        await insertUserToUsers(theUsername, pcId[0].id);
         // if this user is the first one to start a team, add username as start of their team_name concatenation
         if (theTeamToJoin === "") {
             await insertNewTeamToTeams(theUsername, theCourts_id, pcId[0].id);
-            return "A new user was added to users and active = 1, a new team was added to teams";
+            // add username to users table as active
+            await insertUserToUsers(theUsername, pcId[0].id);
+            return [];
         } else {
             // if team_name has already been started, then concatenate this username to it
-            await updateTeamName(theUsername, theTeamToJoin);
-            return "Team name was updated";
+            const teamNameExists = await updateTeamName(
+                theUsername,
+                theTeamToJoin
+            );
+            if (teamNameExists) {
+                // add username to users table as active
+                await insertUserToUsers(theUsername, pcId[0].id);
+                return [];
+            } else {
+                return "Could not find that team name";
+            }
         }
     } else {
         if (found[0].active === 1) {
             return "That username is already signed up for a court";
         } else {
-            // username exists but need to update active to true
-            await updateUserActive(theUsername);
-            // if this user is the first one to start a team, add username as start of their team_name concatenation
+            // if this user is not active and is the first one to start a team
             if (theTeamToJoin === "") {
+                // add username as start of their team_name concatenation
                 await insertNewTeamToTeams(
                     theUsername,
                     theCourts_id,
                     pcId[0].id
                 );
-                return "A new user was added to users and active = 1, a new team was added to teams from existing user";
+                // update username active to true
+                await updateUserActive(theUsername);
+                return [];
             } else {
                 // if team_name has already been started, then concatenate this username to it
-                await updateTeamName(theUsername, theTeamToJoin);
-                return "Team name was updated from existing user";
+                const teamNameExists = await updateTeamName(
+                    theUsername,
+                    theTeamToJoin
+                );
+                if (teamNameExists) {
+                    // username exists but need to update active to true
+                    await updateUserActive(theUsername);
+                    return [];
+                } else {
+                    return "Could not find that team name";
+                }
             }
         }
     }

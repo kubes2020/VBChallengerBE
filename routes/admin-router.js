@@ -44,7 +44,7 @@ router.put("/adjust/:pc", (req, res) => {
 });
 
 // Admin wants to clear teams waitlist and update users' stats to start a new day
-// Input: passcode
+// Input: passcode in Url
 // Output: success message
 router.put("/newday/:pc", (req, res) => {
     const pc = req.params.pc;
@@ -60,7 +60,7 @@ router.put("/newday/:pc", (req, res) => {
 });
 
 // Admin creates a new beach passcode
-// Input: admin_id, new code
+// Input: admin_id, and new code in body
 // Output: a message if successful or not successful
 router.post("/newpasscode", (req, res) => {
     const adminObj = req.body;
@@ -96,6 +96,30 @@ router.delete("/deletepasscode/:pc", (req, res) => {
         })
         .catch((err) => {
             res.status(500).json({ message: "something went wrong" });
+        });
+});
+
+// Admin can create courts after previously creating a passcode
+// Input: court_name / num_players / num_wins / passcode_id in body
+// Output: 1 if successful, 0 if not
+router.post("/createcourts", (req, res) => {
+    const courtObj = req.body;
+    Admin.adminCreateCourts(
+        courtObj.court_name,
+        courtObj.num_players,
+        courtObj.num_wins,
+        courtObj.passcode_id
+    )
+        .then((court) => {
+            console.log("court!!!", court, court[0]);
+            if (court.length > 0) {
+                res.status(403).json({ message: court });
+            } else {
+                res.status(201).json({ message: "Court created successfully" });
+            }
+        })
+        .catch((err) => {
+            res.status(500).json({ message: err.message });
         });
 });
 

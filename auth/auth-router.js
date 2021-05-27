@@ -71,7 +71,7 @@ function makeToken(admin) {
         email: admin.admin_email,
     };
     const options = {
-        expiresIn: "8 hours",
+        expiresIn: "7 days",
     };
     return jwt.sign(payload, jwtSecret, options);
 }

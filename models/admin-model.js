@@ -6,6 +6,7 @@ module.exports = {
     adminNewDay,
     adminNewPasscode,
     adminDeletePasscode,
+    adminCreateCourts,
 };
 
 // (Helper Function) Find passcode.id from code (code is a unique value)
@@ -68,6 +69,31 @@ async function adminDeletePasscode(theCode) {
         await db("passcode").where({ code: theCode }).delete();
         return `The code: ${oldCodeObj[0].code} and all corresponding data was deleted`;
     } else {
+        return [];
+    }
+}
+
+// Admin can create courts after previously creating a passcode
+// Input: court_name / num_players / num_wins / passcode_id in body
+// Output: message if successful or not
+async function adminCreateCourts(
+    court_name,
+    num_players,
+    num_wins,
+    passcode_id
+) {
+    const nameExists = await db("courts")
+        .select("court_name")
+        .where({ court_name });
+    if (nameExists.length > 0) {
+        return "That court name already exists, try again.";
+    } else {
+        await db("courts").insert({
+            court_name: court_name,
+            num_players: num_players,
+            num_wins: num_wins,
+            passcode_id: passcode_id,
+        });
         return [];
     }
 }
