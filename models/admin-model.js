@@ -7,6 +7,7 @@ module.exports = {
     adminNewPasscode,
     adminDeletePasscode,
     adminCreateCourts,
+    updateCredentials,
 };
 
 // (Helper Function) Find passcode.id from code (code is a unique value)
@@ -96,4 +97,13 @@ async function adminCreateCourts(
         });
         return [];
     }
+}
+
+// Admin updates email or password
+// Input: admin.id/newEmail/newPassword in body
+// Output: message for success
+function updateCredentials(id, newEmail, newPassword) {
+    return db("admin")
+        .where({ id })
+        .update({ admin_email: newEmail, password: newPassword });
 }

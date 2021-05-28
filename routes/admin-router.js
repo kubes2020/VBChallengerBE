@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const Admin = require("../models/admin-model.js");
+const bcrypt = require("bcryptjs");
 
 // CRUD operations
 // * All database entries should be UPPERCASE *
@@ -120,6 +121,32 @@ router.post("/createcourts", (req, res) => {
         })
         .catch((err) => {
             res.status(500).json({ message: err.message });
+        });
+});
+
+// Admin updates email or password
+// Input: admin_id/newEmail/newPassword in body
+// Output: message for success or not
+router.put("/update/creds", (req, res) => {
+    const credsObj = req.body;
+    const rounds = parseInt(process.env.HASH_ROUNDS) || 8;
+    const hash = bcrypt.hashSync(credsObj.newPassword, rounds);
+    credsObj.newPassword = hash;
+
+    Admin.updateCredentials(
+        credsObj.admin_id,
+        credsObj.newEmail,
+        credsObj.newPassword
+    )
+        .then((updated) => {
+            updated
+                ? res.status(200).json({ message: "Updated successfully!" })
+                : res
+                      .status(404)
+                      .json({ message: "Could not find that admin" });
+        })
+        .catch((err) => {
+            res.status(500).json({ message: "Something went wrong" });
         });
 });
 
