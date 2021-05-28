@@ -6,10 +6,54 @@ module.exports = {
     findAllTeamsPerCourt,
     findUser,
     addUsername,
-    addUser,
+    addUserToWaitlist,
     updateTeamLoses,
     updateTeamWins,
+    updateTeamName,
 };
+
+// (Helper Function) Find passcode.id from code (code is a unique value)
+function findPasscodeId(theCode) {
+    return db("passcode").select("id").where({ "passcode.code": theCode });
+}
+
+// (Helper Function) Add new user to users table, make sure they don't exist first
+async function insertUserToUsers(theUsername, thePasscode_id) {
+    const userExists = await db("users")
+        .select("username")
+        .where({ username: theUsername, passcode_id: thePasscode_id });
+    if (userExists.length > 0) {
+        return [];
+    }
+    return db("users").insert({
+        username: theUsername,
+        active: 1,
+        passcode_id: thePasscode_id,
+    });
+}
+
+// (Helper Function) Add new team_name to teams table
+function insertNewTeamToTeams(theTeam_name, theCourts_id, thePasscode_id) {
+    return db("teams").insert({
+        team_name: theTeam_name,
+        courts_id: theCourts_id,
+        passcode_id: thePasscode_id,
+    });
+}
+
+// (Helper Function) Update username to active = true
+function updateUserActive(theUsername, thePasscode_id) {
+    return db("users")
+        .where({ username: theUsername, passcode_id: thePasscode_id })
+        .update({ active: 1 });
+}
+
+// (Helper Function) Update username to active = false
+function updateUserNotActive(theUsername, thePasscode_id) {
+    return db("users")
+        .where({ username: theUsername, passcode_id: thePasscode_id })
+        .update({ active: 0 });
+}
 
 // Find all teams on waitlist for all courts with same passcode.code (not correct play order)
 function findAllTeamsPerCode(theCode) {
@@ -46,50 +90,6 @@ function findUser(theCode, theUsername) {
         .where({ "passcode.code": theCode, "users.username": theUsername });
 }
 
-// (Helper Function) Find passcode.id from code (code is a unique value)
-function findPasscodeId(theCode) {
-    return db("passcode").select("id").where({ "passcode.code": theCode });
-}
-
-// (Helper Function) Add new user to users table, make sure they don't exist first
-async function insertUserToUsers(theUsername, thePasscode_id) {
-    const userExists = await db("users")
-        .select("username")
-        .where({ username: theUsername, passcode_id: thePasscode_id });
-    if (userExists.length > 0) {
-        return [];
-    }
-    return db("users").insert({
-        username: theUsername,
-        active: 1,
-        passcode_id: thePasscode_id,
-    });
-}
-
-// (Helper Function) Add new team_name to teams table
-function insertNewTeamToTeams(theTeam_name, theCourts_id, thePasscode_id) {
-    return db("teams").insert({
-        team_name: theTeam_name,
-        courts_id: theCourts_id,
-        passcode_id: thePasscode_id,
-    });
-}
-
-// (Helper Function) Add a user to existing team_name, for the waitlist
-function updateTeamName(theUsername, theTeamToJoin) {
-    const newName = theTeamToJoin + "," + theUsername;
-    return db("teams")
-        .where({ team_name: theTeamToJoin })
-        .update({ team_name: newName });
-}
-
-// (Helper Function) Update username to active = true
-function updateUserActive(theUsername, thePasscode_id) {
-    return db("users")
-        .where({ username: theUsername, passcode_id: thePasscode_id })
-        .update({ active: 1 });
-}
-
 // Add username to users table to show available (active = 0)
 // Make sure that the username does not exist yet
 async function addUsername(theCode, theUsername) {
@@ -107,7 +107,12 @@ async function addUsername(theCode, theUsername) {
 }
 
 // Add user to court waitlist -> check if username is in db, find the passcode.id, then insert into users & teams tables
-async function addUser(theCode, theUsername, theTeamToJoin, theCourts_id) {
+async function addUserToWaitlist(
+    theCode,
+    theUsername,
+    theTeamToJoin,
+    theCourts_id
+) {
     const found = await findUser(theCode, theUsername);
     const [pcId] = await findPasscodeId(theCode);
     // if username is not yet in users table
@@ -120,17 +125,12 @@ async function addUser(theCode, theUsername, theTeamToJoin, theCourts_id) {
             return [];
         } else {
             // if team_name has already been started, then concatenate this username to it
-            const teamNameExists = await updateTeamName(
-                theUsername,
-                theTeamToJoin
-            );
-            if (teamNameExists) {
-                // add username to users table as active
-                await insertUserToUsers(theUsername, pcId.id);
-                return [];
-            } else {
-                return "Could not find that team name";
-            }
+            const newName = theTeamToJoin + "," + theUsername;
+            await db("teams")
+                .where({ team_name: theTeamToJoin, courts_id: theCourts_id })
+                .update({ team_name: newName });
+            await insertUserToUsers(theUsername, pcId.id);
+            return [];
         }
     } else {
         if (found[0].active === 1) {
@@ -145,17 +145,15 @@ async function addUser(theCode, theUsername, theTeamToJoin, theCourts_id) {
                 return [];
             } else {
                 // if team_name has already been started, then concatenate this username to it
-                const teamNameExists = await updateTeamName(
-                    theUsername,
-                    theTeamToJoin
-                );
-                if (teamNameExists) {
-                    // username exists but need to update active to true
-                    await updateUserActive(theUsername, pcId.id);
-                    return [];
-                } else {
-                    return "Could not find that team name";
-                }
+                const newName = theTeamToJoin + "," + theUsername;
+                await db("teams")
+                    .where({
+                        team_name: theTeamToJoin,
+                        courts_id: theCourts_id,
+                    })
+                    .update({ team_name: newName });
+                await updateUserActive(theUsername, pcId.id);
+                return [];
             }
         }
     }
@@ -221,4 +219,24 @@ async function updateTeamWins(theTeam_name, theCode) {
         return "Congratulations!!! Your team is too good...take a break.";
     }
     return "Users and teams tables are updated";
+}
+
+// User wants to remove a username from team_name, only allow if there's more than 1 teammate
+// Update users active = 0
+// Input: passcode in Url, team_name/remove_name in body
+// Output: message for successful or not
+async function updateTeamName(theCode, team_name, remove_name) {
+    const [pcId] = await findPasscodeId(theCode);
+    const splitNames = team_name.split(",");
+    if (splitNames.length <= 1) {
+        return "You cannot remove this remaining name. Instead, delete the team";
+    }
+    const [newTeamName] = splitNames
+        .map((i) => i)
+        .filter((tname) => tname != remove_name);
+    await db("teams")
+        .where({ team_name: team_name, passcode_id: pcId.id })
+        .update({ team_name: newTeamName });
+    await updateUserNotActive(remove_name, pcId.id);
+    return [];
 }

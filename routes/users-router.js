@@ -89,10 +89,15 @@ router.post("/username/available/:pc", (req, res) => {
 // Add user to a waitlist
 // Input: passcode is in Url, username/teamToJoin/courts_id are in body
 // Output: success or error message
-router.post("/user/add/:pc", (req, res) => {
+router.post("/user/addwaitlist/:pc", (req, res) => {
     const pc = req.params.pc;
     const theUser = req.body;
-    Users.addUser(pc, theUser.username, theUser.teamToJoin, theUser.courts_id)
+    Users.addUserToWaitlist(
+        pc,
+        theUser.username,
+        theUser.teamToJoin,
+        theUser.courts_id
+    )
         .then((user) => {
             if (user.length > 0) {
                 res.status(409).json({ message: user });
@@ -103,7 +108,7 @@ router.post("/user/add/:pc", (req, res) => {
             }
         })
         .catch((err) => {
-            res.status(500).json({ message: "Something went wrong" });
+            res.status(500).json({ message: err.message });
         });
 });
 
@@ -134,6 +139,28 @@ router.put("/team/wins/:pc", (req, res) => {
         })
         .catch((err) => {
             res.status(500).json({ message: "Something went wrong" });
+        });
+});
+
+// User wants to remove a username from team_name, only allow if there's more than 1 teammate
+// Update users active = 0
+// Input: passcode in Url, team_name/remove_name in body
+// Output: message for successful or not
+router.put("/teamname/update/:pc", (req, res) => {
+    const pc = req.params.pc;
+    const teamObj = req.body;
+    Users.updateTeamName(pc, teamObj.team_name, teamObj.remove_name)
+        .then((newTeam) => {
+            if (newTeam.length > 0) {
+                res.status(409).json({ message: newTeam });
+            } else {
+                res.status(200).json({
+                    message: "Successfully updated team name",
+                });
+            }
+        })
+        .catch((err) => {
+            res.status(500).json({ message: err.message });
         });
 });
 
