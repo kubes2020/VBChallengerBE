@@ -18,5 +18,14 @@ io.on("connection", (socket) => {
         // this will send message to everyone except myself
         socket.broadcast.emit("message", data);
         console.log("this is data received by BE:", data);
+        // axios
+        //     .get("http://localhost:4000/api/users/waitlist/XXXX")
+        //     .then((waitlist) => {
+        //         console.log("Made it Here!!!!!!");
+        //         res.status(200).json({ message: waitlist });
+        //     })
+        //     .catch((err) => {
+        //         res.status(500).json({ message: err.message });
+        //     });
     });
 });
