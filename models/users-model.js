@@ -55,14 +55,14 @@ function updateUserNotActive(theUsername, thePasscode_id) {
         .update({ active: 0 });
 }
 
-// Find all teams on waitlist for all courts with same passcode.code (not correct play order)
+// Find all teams on waitlist for all courts with same passcode.code (might not be correct play order)
 function findAllTeamsPerCode(theCode) {
     return db("teams")
         .join("passcode", "passcode.id", "courts.passcode_id")
         .join("courts", "courts.id", "teams.courts_id")
         .select("team_name", "court_name", "courts_id")
         .where({ "passcode.code": theCode })
-        .orderBy("courts.id");
+        .orderBy("teams.admin_adjust", "teams.id", "courts.id");
 }
 
 // Find all teams on waitlist for 1 particular court
